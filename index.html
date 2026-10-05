@@ -15,7 +15,7 @@
 <main id="app" class="mx-auto min-h-screen max-w-md p-4"></main>
 
 <script>
-// ---------- Icône iPhone générée automatiquement (pas de fichier image à fournir) ----------
+// ---------- Icône iPhone générée automatiquement ----------
 (() => {
   const c = document.createElement('canvas'); c.width = c.height = 180;
   const x = c.getContext('2d');
@@ -27,110 +27,168 @@
   document.head.appendChild(l);
 })();
 
-// ---------- CURRICULUM ----------
-// WEEKS[semaine][jour] = liste de 5 mots : [mot, traduction, définition, phrase]
-// Dans la phrase, le mot à trouver au quiz est entouré d'accolades { }.
-// Pour ajouter un jour : copie un bloc [ ... ] de 5 mots. Pour une semaine : ajoute un bloc de jours.
-const WEEKS = [
- [ // Semaine 1
-  [['reluctant','réticent','Not willing to do something.','He was {reluctant} to share his opinion.'],
-   ['achieve','atteindre, réussir','To succeed in doing something good.','She worked hard to {achieve} her goal.'],
-   ['benefit','avantage, bénéfice','A good result or help you get from something.','Regular exercise has many {benefits}.'],
-   ['challenge','défi','Something difficult that tests your ability.','Learning a language is a big {challenge}.'],
-   ['improve',"s'améliorer",'To become or make something better.','I want to {improve} my English.']],
-  [['afford','avoir les moyens de','To have enough money to buy something.',"We can't {afford} a new car."],
-   ['avoid','éviter','To stay away from something.','Try to {avoid} the traffic at 8 a.m.'],
-   ['behave','se comporter','To act in a particular way.','The children {behaved} very well.'],
-   ['consider','envisager','To think carefully about something.',"I'm {considering} moving to Lyon."],
-   ['depend','dépendre','To be decided by something else.','It {depends} on the weather.']],
-  [['expand','se développer','To become bigger.','The company wants to {expand} abroad.'],
-   ['familiar','familier','Well known to you.','Her face looks {familiar}.'],
-   ['generous','généreux','Happy to give more than needed.','He is very {generous} with his time.'],
-   ['handle','gérer','To deal with a problem or situation.','She can {handle} stress easily.'],
-   ['insight','compréhension profonde','A clear understanding of something.','The book gives great {insight} into human behaviour.']],
-  [['maintain','maintenir, entretenir','To keep something in good condition.',"It's hard to {maintain} a healthy routine."],
-   ['narrow','étroit','Small from side to side.','The street is too {narrow} for trucks.'],
-   ['obvious','évident','Easy to see or understand.','The answer was {obvious}.'],
-   ['particular','particulier','Special or specific.','Is there any {particular} reason?'],
-   ['reliable','fiable','Able to be trusted.','He is a {reliable} worker.']],
-  [['schedule','emploi du temps','A plan of when things will happen.','My {schedule} is full this week.'],
-   ['tend','avoir tendance à','To usually do something.','I {tend} to wake up early.'],
-   ['upset','contrarié, bouleversé','Unhappy or worried.','She was {upset} about the news.'],
-   ['valuable','précieux','Very useful or worth a lot of money.','Your advice was very {valuable}.'],
-   ['wander','flâner, errer','To walk slowly without a clear goal.','We {wandered} around the old town.']]
- ],
- [ // Semaine 2
-  [['aware','conscient','Knowing that something exists.','Are you {aware} of the risks?'],
-   ['boost','stimuler','To increase or improve something.','Good sleep can {boost} your memory.'],
-   ['cope','faire face','To deal with a difficult situation.','How do you {cope} with pressure?'],
-   ['deadline','date limite','The last time something must be finished.','The {deadline} is next Friday.'],
-   ['effort','effort','Energy used to do something.','It takes a lot of {effort} to learn.']],
-  [['fair','juste, équitable','Treating people equally.',"That doesn't seem {fair}."],
-   ['gather','rassembler','To bring together or collect.','People {gathered} in the square.'],
-   ['hesitate','hésiter','To pause before doing something.',"Don't {hesitate} to ask questions."],
-   ['impact','impact','A strong effect on something.','Social media has a big {impact} on teenagers.'],
-   ['journey','voyage, trajet','A trip from one place to another.','The {journey} took three hours.']],
-  [['lack','manque','Not having enough of something.','A {lack} of sleep affects your mood.'],
-   ['measure','mesurer','To find the size or amount of something.','Please {measure} the room carefully.'],
-   ['nowadays','de nos jours','At the present time.','Most people use smartphones {nowadays}.'],
-   ['option','option, choix','A choice you can make.','We have two {options}.'],
-   ['pursue','poursuivre','To try to achieve something over time.','He wants to {pursue} a career in design.']],
-  [['reduce','réduire','To make something smaller or less.','We must {reduce} our costs.'],
-   ['settle',"s'installer",'To start living in a place.','They want to {settle} in the countryside.'],
-   ['struggle','avoir du mal','To try hard when something is difficult.','Many students {struggle} with grammar.'],
-   ['suggest','suggérer','To offer an idea or plan.','I {suggest} taking a short break.'],
-   ['tough','difficile, dur','Difficult or strong.','It was a {tough} decision.']],
-  [['unlikely','peu probable','Not expected to happen.',"It's {unlikely} to rain today."],
-   ['update','mettre à jour','To make something more current.','Remember to {update} your phone.'],
-   ['vague','vague, flou','Not clear or exact.','His answer was too {vague}.'],
-   ['wealth','richesse','A large amount of money or valuable things.','Health is more important than {wealth}.'],
-   ['worth','valoir la peine','Having a certain value or being useful.','This museum is {worth} visiting.']]
- ]
+// =====================================================================
+// CURRICULUM : 1 bloc [ ... ] = 1 jour = 5 mots.
+// Format d'un mot : [anglais, traductions FR (séparées par , ou /), définition simple, phrase]
+// Dans la phrase, le mot est entouré de { } (affiché en gras).
+// NE PAS changer l'ordre des jours existants (la progression en dépend).
+// =====================================================================
+const PER_WEEK = 5; // nombre de jours par semaine (un bilan est débloqué à la fin de chaque semaine)
+
+const CURRICULUM = [
+ // Jour 1
+ [['reluctant','réticent','Not willing to do something.','He was {reluctant} to share his opinion.'],
+  ['achieve','atteindre, réussir','To succeed in doing something good.','She worked hard to {achieve} her goal.'],
+  ['benefit','avantage, bénéfice','A good result or help you get from something.','Regular exercise has many {benefits}.'],
+  ['challenge','défi','Something difficult that tests your ability.','Learning a language is a big {challenge}.'],
+  ['improve',"s'améliorer, améliorer",'To become or make something better.','I want to {improve} my English.']],
+ // Jour 2
+ [['afford','avoir les moyens de','To have enough money to buy something.',"We can't {afford} a new car."],
+  ['avoid','éviter','To stay away from something.','Try to {avoid} the traffic at 8 a.m.'],
+  ['behave','se comporter','To act in a particular way.','The children {behaved} very well.'],
+  ['consider','envisager','To think carefully about something.',"I'm {considering} moving to Lyon."],
+  ['depend','dépendre','To be decided by something else.','It {depends} on the weather.']],
+ // Jour 3
+ [['expand','se développer, étendre','To become bigger.','The company wants to {expand} abroad.'],
+  ['familiar','familier','Well known to you.','Her face looks {familiar}.'],
+  ['generous','généreux','Happy to give more than needed.','He is very {generous} with his time.'],
+  ['handle','gérer','To deal with a problem or situation.','She can {handle} stress easily.'],
+  ['insight','compréhension profonde','A clear understanding of something.','The book gives great {insight} into human behaviour.']],
+ // Jour 4
+ [['maintain','maintenir, entretenir','To keep something in good condition.',"It's hard to {maintain} a healthy routine."],
+  ['narrow','étroit','Small from side to side.','The street is too {narrow} for trucks.'],
+  ['obvious','évident','Easy to see or understand.','The answer was {obvious}.'],
+  ['particular','particulier','Special or specific.','Is there any {particular} reason?'],
+  ['reliable','fiable','Able to be trusted.','He is a {reliable} worker.']],
+ // Jour 5
+ [['schedule','emploi du temps, planning','A plan of when things will happen.','My {schedule} is full this week.'],
+  ['tend','avoir tendance à','To usually do something.','I {tend} to wake up early.'],
+  ['upset','contrarié, bouleversé','Unhappy or worried.','She was {upset} about the news.'],
+  ['valuable','précieux','Very useful or worth a lot of money.','Your advice was very {valuable}.'],
+  ['wander','flâner, errer','To walk slowly without a clear goal.','We {wandered} around the old town.']],
+ // Jour 6
+ [['aware','conscient','Knowing that something exists.','Are you {aware} of the risks?'],
+  ['boost','stimuler','To increase or improve something.','Good sleep can {boost} your memory.'],
+  ['cope','faire face','To deal with a difficult situation.','How do you {cope} with pressure?'],
+  ['deadline','date limite, échéance','The last time something must be finished.','The {deadline} is next Friday.'],
+  ['effort','effort','Energy used to do something.','It takes a lot of {effort} to learn.']],
+ // Jour 7
+ [['fair','juste, équitable','Treating people equally.',"That doesn't seem {fair}."],
+  ['gather','rassembler','To bring together or collect.','People {gathered} in the square.'],
+  ['hesitate','hésiter','To pause before doing something.',"Don't {hesitate} to ask questions."],
+  ['impact','impact','A strong effect on something.','Social media has a big {impact} on teenagers.'],
+  ['journey','voyage, trajet','A trip from one place to another.','The {journey} took three hours.']],
+ // Jour 8
+ [['lack','manque','Not having enough of something.','A {lack} of sleep affects your mood.'],
+  ['measure','mesurer','To find the size or amount of something.','Please {measure} the room carefully.'],
+  ['nowadays','de nos jours','At the present time.','Most people use smartphones {nowadays}.'],
+  ['option','option, choix','A choice you can make.','We have two {options}.'],
+  ['pursue','poursuivre','To try to achieve something over time.','He wants to {pursue} a career in design.']],
+ // Jour 9
+ [['reduce','réduire','To make something smaller or less.','We must {reduce} our costs.'],
+  ['settle',"s'installer",'To start living in a place.','They want to {settle} in the countryside.'],
+  ['struggle','avoir du mal, lutter','To try hard when something is difficult.','Many students {struggle} with grammar.'],
+  ['suggest','suggérer','To offer an idea or plan.','I {suggest} taking a short break.'],
+  ['tough','difficile, dur','Difficult or strong.','It was a {tough} decision.']],
+ // Jour 10
+ [['unlikely','peu probable','Not expected to happen.',"It's {unlikely} to rain today."],
+  ['update','mettre à jour','To make something more current.','Remember to {update} your phone.'],
+  ['vague','vague, flou','Not clear or exact.','His answer was too {vague}.'],
+  ['wealth','richesse','A large amount of money or valuable things.','Health is more important than {wealth}.'],
+  ['worth','valoir la peine, valoir','Having a certain value or being useful.','This museum is {worth} visiting.']],
+ // Jour 11
+ [['attempt','tenter, essayer','To try to do something difficult.','He {attempted} to climb the wall.'],
+  ['currently','actuellement','Happening now.','I am {currently} working from home.'],
+  ['damage','dommage, dégâts','Harm done to something.','The storm caused serious {damage}.'],
+  ['decline','refuser, décliner','To politely say no.','She {declined} the invitation.'],
+  ['delay','retard, retarder','When something happens later than planned.','There was a long {delay} at the airport.']],
+ // Jour 12
+ [['enormous','énorme','Very, very big.','They live in an {enormous} house.'],
+  ['failure','échec','Not succeeding at something.','His business ended in {failure}.'],
+  ['fear','peur, crainte','A bad feeling when you think something is dangerous.','She has a {fear} of flying.'],
+  ['guess','deviner','To give an answer without being sure.','Can you {guess} my age?'],
+  ['increase','augmenter, augmentation','To become or make something bigger in number.','Prices {increase} every year.']],
+ // Jour 13
+ [['knowledge','connaissance, savoir','What you know about a subject.','His {knowledge} of history is impressive.'],
+  ['likely','probable','Probably going to happen.',"It's {likely} to snow tonight."],
+  ['manage','réussir à, gérer','To succeed in doing something difficult.','I {managed} to finish on time.'],
+  ['opportunity','opportunité, occasion','A chance to do something good.','This job is a great {opportunity}.'],
+  ['purpose','but, objectif','The reason why something is done.','What is the {purpose} of this meeting?']],
+ // Jour 14
+ [['recently','récemment','Not long ago.','I {recently} moved to Paris.'],
+  ['relief','soulagement','A good feeling when a worry goes away.','What a {relief}! The test is over.'],
+  ['request','demande, demander','To ask for something politely or formally.','He {requested} a day off.'],
+  ['responsible','responsable','Having the duty to take care of something.','Who is {responsible} for this project?'],
+  ['shortage','pénurie','When there is not enough of something.','There is a {shortage} of nurses.']],
+ // Jour 15
+ [['support','soutenir, soutien','To help or encourage someone.','My family always {supports} me.'],
+  ['task','tâche','A piece of work to do.','Washing the dishes is my daily {task}.'],
+  ['unusual','inhabituel, étrange','Not common or normal.',"It's {unusual} to see snow here."],
+  ['warn','avertir, prévenir','To tell someone about a possible danger.','The sign {warns} drivers about ice.'],
+  ['willing','prêt à, disposé à','Happy and ready to do something.','Are you {willing} to help us?']],
+
+ // ▼▼▼ COLLE ICI LES JOURS 16 À 60 (un bloc [ ... ] de 5 mots par jour, séparés par des virgules) ▼▼▼
+
 ];
 
 // ---------- DONNÉES DÉRIVÉES ----------
-let n = 0;
-const DAYS = WEEKS.flatMap((wk, wi) => wk.map(day => ({
-  day: ++n, week: wi + 1,
-  words: day.map(([w, tr, def, ex]) => ({ w, tr, def, ex }))
-})));
+const DAYS = CURRICULUM.map((words, i) => ({
+  day: i + 1, week: Math.ceil((i + 1) / PER_WEEK),
+  words: words.map(([w, tr, def, ex]) => ({ w, tr, def, ex }))
+}));
 const ALL = DAYS.flatMap(d => d.words);
+const WEEKS = [...new Set(DAYS.map(d => d.week))];
 
-// ---------- STOCKAGE ----------
+// ---------- STOCKAGE (même clé qu'avant : la progression est conservée) ----------
 const KEY = 'vocab-b1b2-v1';
-const DEF = { currentDay: 1, learned: [], quizScores: {}, mastered: [], weekly: {} };
+const DEF = { currentDay: 1, learned: [], quizScores: {}, mastered: [], weekly: {}, bestStreak: 0 };
 let S;
 try { S = { ...DEF, ...JSON.parse(localStorage.getItem(KEY)) }; } catch { S = { ...DEF }; }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
 
 // ---------- OUTILS ----------
+const $ = id => document.getElementById(id);
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-const form = e => e.match(/\{(.+?)\}/)[1];
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const plain = e => e.replace(/[{}]/g, '');
-const blank = e => e.replace(/\{.+?\}/, '_____');
+const hl = e => esc(e).replace(/\{(.+?)\}/g, '<b class="text-indigo-600">$1</b>');
 const canSpeak = 'speechSynthesis' in window;
 const speak = t => { if (!canSpeak) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'en-US'; u.rate = 0.9; speechSynthesis.speak(u); };
-const build = words => shuffle(words).map(x => {
-  const ans = form(x.ex);
-  const others = shuffle(ALL.filter(p => p.w !== x.w)).slice(0, 3).map(p => form(p.ex));
-  return { w: x.w, s: blank(x.ex), ans, opts: shuffle([ans, ...others]) };
-});
+
+// Normalisation : minuscules, sans accents ni ponctuation, sans article / "se" / "to" en début
+const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[’‘]/g, "'").replace(/[^a-z0-9' ]/g, ' ').replace(/\s+/g, ' ').trim()
+  .replace(/^(se |s'|l'|le |la |les |un |une |to )/, '');
+const parts = s => s.split(/[,\/;]/);
+
+// Question aléatoire : EN→FR ou FR→EN
+function mkQ(x) {
+  const en = Math.random() < 0.5;
+  return en
+    ? { w: x.w, ex: x.ex, en: true, p: x.w, hint: 'Traduis en français', ok: parts(x.tr).map(norm), show: x.tr }
+    : { w: x.w, ex: x.ex, en: false, p: x.tr, hint: 'Écris le mot en anglais', ok: [norm(x.w)], show: x.w };
+}
+const check = (q, g) => parts(g).some(p => p.trim() && q.ok.includes(norm(p)));
+
 const td = () => DAYS.find(d => d.day === S.currentDay);
-const weeksDone = () => WEEKS.map((_, i) => i + 1).filter(k => DAYS.filter(d => d.week === k).every(d => d.day in S.quizScores));
+const unlocked = () => DAYS.filter(d => d.day in S.quizScores).flatMap(d => d.words);
+const weeksDone = () => WEEKS.filter(k => DAYS.filter(d => d.week === k).every(d => d.day in S.quizScores));
+const cq = () => V.kind === 'endless' ? V.q : V.qs[V.i];
 
 // ---------- VUES ----------
 let V = { name: 'home' };
 
 function homeView() {
-  const today = td();
+  const today = td(), un = unlocked();
   const pct = Math.round(S.mastered.length / ALL.length * 100);
   const learned = today && S.learned.includes(today.day);
   const btn = (a, label, cls = 'bg-white', v = '', dis = false) =>
     `<button data-a="${a}" data-v="${v}" ${dis ? 'disabled' : ''} class="w-full rounded-2xl p-4 text-left font-semibold shadow disabled:opacity-40 ${cls}">${label}</button>`;
+  const wd = weeksDone();
   return `<div class="flex flex-col gap-4">
     <h1 class="text-3xl font-bold">5 mots par jour</h1>
     <div class="rounded-3xl bg-white p-5 shadow">
-      <p class="text-sm text-slate-500">Mots maîtrisés</p>
+      <p class="text-sm text-slate-500">Mots maîtrisés · jour ${Math.min(S.currentDay, DAYS.length)} / ${DAYS.length}</p>
       <p class="text-2xl font-bold">${S.mastered.length} / ${ALL.length}</p>
       <div class="mt-2 h-2 rounded-full bg-slate-200"><div class="h-2 rounded-full bg-emerald-500" style="width:${pct}%"></div></div>
     </div>
@@ -138,7 +196,9 @@ function homeView() {
       ${btn('learn', '📖 Apprendre les 5 mots ' + (learned ? '✓' : ''), 'bg-indigo-600 text-white')}
       ${btn('quiz', '✏️ Quiz du jour', 'bg-white', '', !learned)}`
       : `<p class="rounded-2xl bg-emerald-100 p-4">🎓 Curriculum terminé, bravo !</p>`}
-    ${weeksDone().map(k => btn('review', `🏁 Bilan semaine ${k} ${S.weekly[k] ? '(dernier : ' + S.weekly[k] + ')' : ''}`, 'bg-white', k)).join('')}
+    ${btn('endless', `♾️ Révision infinie <span class="block text-sm font-normal text-slate-500">${un.length ? un.length + ' mots · record : ' + S.bestStreak : 'Disponible après ton premier quiz'}</span>`, 'bg-white', '', !un.length)}
+    ${wd.length ? `<h2 class="mt-2 text-lg font-semibold">Bilans de semaine</h2>
+      <div class="grid grid-cols-3 gap-2">${wd.map(k => `<button data-a="review" data-v="${k}" class="rounded-xl bg-white p-3 text-sm font-semibold shadow">S${k}<span class="block text-xs font-normal text-slate-500">${S.weekly[k] || 'à faire'}</span></button>`).join('')}</div>` : ''}
     <button data-a="reset" class="mt-6 text-sm text-slate-400 underline">Réinitialiser la progression</button>
   </div>`;
 }
@@ -146,16 +206,14 @@ function homeView() {
 function learnView() {
   const words = td().words, w = words[V.i], last = V.i === words.length - 1;
   return `<div class="flex flex-col gap-4">
-    <div class="flex justify-between text-sm text-slate-500">
-      <button data-a="home">← Retour</button><span>${V.i + 1} / ${words.length}</span>
-    </div>
+    <div class="flex justify-between text-sm text-slate-500"><button data-a="home">← Retour</button><span>${V.i + 1} / ${words.length}</span></div>
     <div data-a="flip" class="flex min-h-80 cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-white p-6 text-center shadow-lg">
       <h2 class="text-4xl font-bold text-indigo-600">${w.w}</h2>
       ${canSpeak ? `<button data-a="say" class="rounded-full bg-indigo-100 px-4 py-2 text-indigo-700">🔊 Écouter</button>` : ''}
       ${V.flip ? `<div class="space-y-3">
-          <p class="text-xl font-semibold">${w.tr}</p>
+          <p class="text-xl font-semibold">${esc(w.tr)}</p>
           <p class="text-slate-600">${w.def}</p>
-          <p class="italic text-slate-500">“${plain(w.ex)}” ${canSpeak ? '<button data-a="sayex">🔊</button>' : ''}</p>
+          <p class="italic text-slate-500">“${hl(w.ex)}” ${canSpeak ? '<button data-a="sayex">🔊</button>' : ''}</p>
         </div>` : `<p class="text-sm text-slate-400">Touche la carte pour voir la réponse</p>`}
     </div>
     <button data-a="next" class="rounded-2xl bg-indigo-600 py-3 font-semibold text-white active:scale-95">${last ? 'Terminer l’apprentissage' : 'Mot suivant →'}</button>
@@ -163,8 +221,8 @@ function learnView() {
 }
 
 function quizView() {
-  const N = V.qs.length;
-  if (V.i >= N) {
+  const E = V.kind === 'endless', N = E ? 0 : V.qs.length;
+  if (!E && V.i >= N) {
     return `<div class="flex flex-col items-center gap-4 pt-16 text-center">
       <p class="text-6xl">${V.good.length >= N * 0.8 ? '🎉' : '💪'}</p>
       <h2 class="text-2xl font-bold">${V.good.length} / ${N}</h2>
@@ -172,27 +230,46 @@ function quizView() {
       <button data-a="finish" class="mt-4 w-full rounded-2xl bg-indigo-600 py-3 font-semibold text-white">Continuer</button>
     </div>`;
   }
-  const q = V.qs[V.i];
-  const opts = q.opts.map((o, k) => {
-    let c = 'bg-white';
-    if (V.picked !== null) c = o === q.ans ? 'bg-emerald-100 border-emerald-500' : k === V.picked ? 'bg-rose-100 border-rose-500' : 'bg-white opacity-50';
-    return `<button data-a="pick" data-v="${k}" class="rounded-2xl border-2 border-transparent p-4 text-left text-lg shadow-sm ${c}">${o}</button>`;
-  }).join('');
+  const q = cq(), r = V.res;
   return `<div class="flex flex-col gap-4">
-    <div class="flex justify-between text-sm text-slate-500"><button data-a="home">← Quitter</button><span>${V.title} · ${V.i + 1}/${N}</span></div>
-    <div class="h-2 rounded-full bg-slate-200"><div class="h-2 rounded-full bg-indigo-500" style="width:${V.i / N * 100}%"></div></div>
-    <p class="rounded-3xl bg-white p-6 text-xl leading-relaxed shadow">${q.s}</p>
-    <div class="grid gap-3">${opts}</div>
-    ${V.picked !== null ? `<button data-a="nextq" class="rounded-2xl bg-indigo-600 py-3 font-semibold text-white">Suivant →</button>` : ''}
+    <div class="flex justify-between text-sm text-slate-500">
+      <button data-a="home">← ${E ? 'Terminer' : 'Quitter'}</button>
+      <span>${E ? `🔥 ${V.streak} · record ${S.bestStreak}` : `${V.title} · ${V.i + 1}/${N}`}</span>
+    </div>
+    ${E ? '' : `<div class="h-2 rounded-full bg-slate-200"><div class="h-2 rounded-full bg-indigo-500" style="width:${V.i / N * 100}%"></div></div>`}
+    <div class="rounded-3xl bg-white p-6 text-center shadow">
+      <p class="text-sm text-slate-400">${q.hint}</p>
+      <p class="mt-2 text-3xl font-bold text-indigo-600">${esc(q.p)}</p>
+      ${q.en && canSpeak ? `<button data-a="sayq" class="mt-3 rounded-full bg-indigo-100 px-4 py-2 text-indigo-700">🔊</button>` : ''}
+    </div>
+    <form class="flex flex-col gap-3">
+      <input id="ans" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go"
+        placeholder="Ta réponse…" ${r ? 'readonly' : ''} value="${r ? esc(r.g) : ''}"
+        class="rounded-2xl border-2 p-4 text-lg ${r ? (r.ok ? 'border-emerald-500 bg-emerald-50' : 'border-rose-500 bg-rose-50') : 'border-slate-200 bg-white'}">
+      ${r ? `<div class="space-y-1 rounded-2xl bg-white p-4 text-sm shadow">
+        <p class="font-semibold">${r.ok ? '✅ Correct ! <span class="font-normal text-slate-500">(' + esc(q.show) + ')</span>' : '❌ Réponse : ' + esc(q.show)}</p>
+        <p class="italic text-slate-500">${hl(q.ex)}</p></div>` : ''}
+      <button id="go" class="rounded-2xl bg-indigo-600 py-3 font-semibold text-white">${r ? 'Suivant →' : 'Valider'}</button>
+    </form>
   </div>`;
 }
 
 function render() {
-  document.getElementById('app').innerHTML = V.name === 'learn' ? learnView() : V.name === 'quiz' ? quizView() : homeView();
+  $('app').innerHTML = V.name === 'learn' ? learnView() : V.name === 'quiz' ? quizView() : homeView();
+  if (V.name === 'quiz' && !(V.kind !== 'endless' && V.i >= V.qs.length)) {
+    const el = $(V.res ? 'go' : 'ans'); if (el) el.focus({ preventScroll: true });
+  }
 }
 
 // ---------- ACTIONS ----------
-const startQuiz = (kind, title, words, wk) => { V = { name: 'quiz', kind, title, wk, qs: build(words), i: 0, picked: null, good: [], bad: [] }; };
+const startQuiz = (kind, title, words, wk) => {
+  V = { name: 'quiz', kind, title, wk, qs: shuffle(words).map(mkQ), i: 0, res: null, good: [], bad: [] };
+};
+function draw() {
+  const pool = unlocked(); let x;
+  do { x = pool[Math.floor(Math.random() * pool.length)]; } while (pool.length > 1 && x.w === V.last);
+  V.last = x.w; return mkQ(x);
+}
 
 function act(a, v) {
   if (a === 'home') V = { name: 'home' };
@@ -200,18 +277,33 @@ function act(a, v) {
   else if (a === 'flip') V.flip = !V.flip;
   else if (a === 'say') { speak(td().words[V.i].w); return; }
   else if (a === 'sayex') { speak(plain(td().words[V.i].ex)); return; }
+  else if (a === 'sayq') { speak(cq().w); return; }
   else if (a === 'next') {
     if (V.i >= td().words.length - 1) { S.learned = [...new Set([...S.learned, td().day])]; save(); V = { name: 'home' }; }
     else { V.i++; V.flip = false; }
   }
   else if (a === 'quiz') startQuiz('daily', 'Jour ' + td().day, td().words);
-  else if (a === 'review') startQuiz('weekly', 'Bilan S' + v, shuffle(DAYS.filter(d => d.week == v).flatMap(d => d.words)).slice(0, 15), +v);
-  else if (a === 'pick') {
-    if (V.picked !== null) return;
-    const q = V.qs[V.i]; V.picked = +v;
-    (q.opts[+v] === q.ans ? V.good : V.bad).push(q.w);
+  else if (a === 'review') startQuiz('weekly', 'Bilan S' + v, DAYS.filter(d => d.week == v).flatMap(d => d.words).sort(() => Math.random() - .5).slice(0, 15), +v);
+  else if (a === 'endless') {
+    V = { name: 'quiz', kind: 'endless', streak: 0, res: null, last: null, good: [], bad: [] };
+    V.q = draw();
   }
-  else if (a === 'nextq') { V.i++; V.picked = null; }
+  else if (a === 'submit') {
+    const q = cq();
+    if (!V.res) {
+      const g = $('ans').value; if (!g.trim()) return;
+      const ok = check(q, g); V.res = { ok, g };
+      (ok ? V.good : V.bad).push(q.w);
+      if (V.kind === 'endless') {
+        if (ok) { V.streak++; S.bestStreak = Math.max(S.bestStreak, V.streak); S.mastered = [...new Set([...S.mastered, q.w])]; }
+        else { V.streak = 0; S.mastered = S.mastered.filter(w => w !== q.w); }
+        save();
+      }
+    } else {
+      V.res = null;
+      if (V.kind === 'endless') V.q = draw(); else V.i++;
+    }
+  }
   else if (a === 'finish') {
     if (V.kind === 'daily') {
       S.quizScores[td().day] = V.good.length;
@@ -234,6 +326,7 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-a]');
   if (b && !b.disabled) act(b.dataset.a, b.dataset.v);
 });
+document.addEventListener('submit', e => { e.preventDefault(); act('submit'); });
 render();
 </script>
 </body>
