@@ -33,7 +33,7 @@
 // Dans la phrase, le mot est entouré de { } (affiché en gras).
 // NE PAS changer l'ordre des jours existants (la progression en dépend).
 // =====================================================================
-const PER_WEEK = 5; // nombre de jours par semaine (un bilan est débloqué à la fin de chaque semaine)
+const PER_WEEK = 5;
 
 const CURRICULUM = [
  // Jour 1
@@ -125,10 +125,7 @@ const CURRICULUM = [
   ['task','tâche','A piece of work to do.','Washing the dishes is my daily {task}.'],
   ['unusual','inhabituel, étrange','Not common or normal.',"It's {unusual} to see snow here."],
   ['warn','avertir, prévenir','To tell someone about a possible danger.','The sign {warns} drivers about ice.'],
-  ['willing','prêt à, disposé à','Happy and ready to do something.','Are you {willing} to help us?']],
-
- // ▼▼▼ COLLE ICI LES JOURS 16 À 60 (un bloc [ ... ] de 5 mots par jour, séparés par des virgules) ▼▼▼
-
+  ['willing','prêt à, disposé à','Happy and ready to do something.','Are you {willing} to help us?']]
 ];
 
 // ---------- DONNÉES DÉRIVÉES ----------
@@ -139,7 +136,7 @@ const DAYS = CURRICULUM.map((words, i) => ({
 const ALL = DAYS.flatMap(d => d.words);
 const WEEKS = [...new Set(DAYS.map(d => d.week))];
 
-// ---------- STOCKAGE (même clé qu'avant : la progression est conservée) ----------
+// ---------- STOCKAGE ----------
 const KEY = 'vocab-b1b2-v1';
 const DEF = { currentDay: 1, learned: [], quizScores: {}, mastered: [], weekly: {}, bestStreak: 0 };
 let S;
@@ -153,15 +150,51 @@ const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&
 const plain = e => e.replace(/[{}]/g, '');
 const hl = e => esc(e).replace(/\{(.+?)\}/g, '<b class="text-indigo-600">$1</b>');
 const canSpeak = 'speechSynthesis' in window;
-const speak = t => { if (!canSpeak) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'en-US'; u.rate = 0.9; speechSynthesis.speak(u); };
 
-// Normalisation : minuscules, sans accents ni ponctuation, sans article / "se" / "to" en début
+// --- FONCTION AUDIO NATURELLE (MP3 Studio + Voix Améliorée) ---
+let currentAudio = null;
+const playSynthetic = t => {
+  if (!canSpeak) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(t);
+  u.lang = 'en-US';
+  u.rate = 0.92;
+  const voices = speechSynthesis.getVoices();
+  const bestVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Samantha') || v.name.includes('Siri') || v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Premium')))
+    || voices.find(v => v.lang === 'en-US' || v.lang === 'en-GB');
+  if (bestVoice) u.voice = bestVoice;
+  speechSynthesis.speak(u);
+};
+
+const speak = async t => {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  const clean = t.trim().toLowerCase();
+  // Si c'est un mot unique, on tente de récupérer le vrai enregistrement humain MP3
+  if (!clean.includes(' ')) {
+    try {
+      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${clean}`);
+      if (res.ok) {
+        const data = await res.json();
+        const phonetics = data[0]?.phonetics || [];
+        const mp3 = phonetics.find(p => p.audio && p.audio.endsWith('.mp3'))?.audio;
+        if (mp3) {
+          currentAudio = new Audio(mp3);
+          currentAudio.play();
+          return;
+        }
+      }
+    } catch (e) {}
+  }
+  // Secours ou lecture de phrase complète : synthèse vocale améliorée
+  playSynthetic(t);
+};
+
+// Normalisation des réponses
 const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   .replace(/[’‘]/g, "'").replace(/[^a-z0-9' ]/g, ' ').replace(/\s+/g, ' ').trim()
   .replace(/^(se |s'|l'|le |la |les |un |une |to )/, '');
 const parts = s => s.split(/[,\/;]/);
 
-// Question aléatoire : EN→FR ou FR→EN
 function mkQ(x) {
   const en = Math.random() < 0.5;
   return en
@@ -192,8 +225,7 @@ function homeView() {
       <p class="text-2xl font-bold">${S.mastered.length} / ${ALL.length}</p>
       <div class="mt-2 h-2 rounded-full bg-slate-200"><div class="h-2 rounded-full bg-emerald-500" style="width:${pct}%"></div></div>
     </div>
-    ${today ? `<h2 class="mt-2 text-lg font-semibold">Jour ${today.day}</h2>
-      ${btn('learn', '📖 Apprendre les 5 mots ' + (learned ? '✓' : ''), 'bg-indigo-600 text-white')}
+    ${today ? `<h2 class="mt-2 text-lg font-semibold">Jour ${today.day}</h2>${btn('learn', '📖 Apprendre les 5 mots ' + (learned ? '✓' : ''), 'bg-indigo-600 text-white')}
       ${btn('quiz', '✏️ Quiz du jour', 'bg-white', '', !learned)}`
       : `<p class="rounded-2xl bg-emerald-100 p-4">🎓 Curriculum terminé, bravo !</p>`}
     ${btn('endless', `♾️ Révision infinie <span class="block text-sm font-normal text-slate-500">${un.length ? un.length + ' mots · record : ' + S.bestStreak : 'Disponible après ton premier quiz'}</span>`, 'bg-white', '', !un.length)}
@@ -209,11 +241,11 @@ function learnView() {
     <div class="flex justify-between text-sm text-slate-500"><button data-a="home">← Retour</button><span>${V.i + 1} / ${words.length}</span></div>
     <div data-a="flip" class="flex min-h-80 cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-white p-6 text-center shadow-lg">
       <h2 class="text-4xl font-bold text-indigo-600">${w.w}</h2>
-      ${canSpeak ? `<button data-a="say" class="rounded-full bg-indigo-100 px-4 py-2 text-indigo-700">🔊 Écouter</button>` : ''}
+      <button data-a="say" class="rounded-full bg-indigo-100 px-4 py-2 text-indigo-700">🔊 Écouter</button>
       ${V.flip ? `<div class="space-y-3">
           <p class="text-xl font-semibold">${esc(w.tr)}</p>
           <p class="text-slate-600">${w.def}</p>
-          <p class="italic text-slate-500">“${hl(w.ex)}” ${canSpeak ? '<button data-a="sayex">🔊</button>' : ''}</p>
+          <p class="italic text-slate-500">“${hl(w.ex)}” <button data-a="sayex">🔊</button></p>
         </div>` : `<p class="text-sm text-slate-400">Touche la carte pour voir la réponse</p>`}
     </div>
     <button data-a="next" class="rounded-2xl bg-indigo-600 py-3 font-semibold text-white active:scale-95">${last ? 'Terminer l’apprentissage' : 'Mot suivant →'}</button>
@@ -240,7 +272,7 @@ function quizView() {
     <div class="rounded-3xl bg-white p-6 text-center shadow">
       <p class="text-sm text-slate-400">${q.hint}</p>
       <p class="mt-2 text-3xl font-bold text-indigo-600">${esc(q.p)}</p>
-      ${q.en && canSpeak ? `<button data-a="sayq" class="mt-3 rounded-full bg-indigo-100 px-4 py-2 text-indigo-700">🔊</button>` : ''}
+      ${q.en ? `<button data-a="sayq" class="mt-3 rounded-full bg-indigo-100 px-4 py-2 text-indigo-700">🔊</button>` : ''}
     </div>
     <form class="flex flex-col gap-3">
       <input id="ans" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go"
