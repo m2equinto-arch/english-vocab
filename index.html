@@ -1,1 +1,240 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="5 mots">
+<link rel="manifest" href="manifest.json">
+<title>5 mots par jour</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<main id="app" class="mx-auto min-h-screen max-w-md p-4"></main>
 
+<script>
+// ---------- Icône iPhone générée automatiquement (pas de fichier image à fournir) ----------
+(() => {
+  const c = document.createElement('canvas'); c.width = c.height = 180;
+  const x = c.getContext('2d');
+  x.fillStyle = '#4f46e5'; x.fillRect(0, 0, 180, 180);
+  x.fillStyle = '#fff'; x.font = 'bold 110px sans-serif';
+  x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('5', 90, 98);
+  const l = document.createElement('link');
+  l.rel = 'apple-touch-icon'; l.href = c.toDataURL('image/png');
+  document.head.appendChild(l);
+})();
+
+// ---------- CURRICULUM ----------
+// WEEKS[semaine][jour] = liste de 5 mots : [mot, traduction, définition, phrase]
+// Dans la phrase, le mot à trouver au quiz est entouré d'accolades { }.
+// Pour ajouter un jour : copie un bloc [ ... ] de 5 mots. Pour une semaine : ajoute un bloc de jours.
+const WEEKS = [
+ [ // Semaine 1
+  [['reluctant','réticent','Not willing to do something.','He was {reluctant} to share his opinion.'],
+   ['achieve','atteindre, réussir','To succeed in doing something good.','She worked hard to {achieve} her goal.'],
+   ['benefit','avantage, bénéfice','A good result or help you get from something.','Regular exercise has many {benefits}.'],
+   ['challenge','défi','Something difficult that tests your ability.','Learning a language is a big {challenge}.'],
+   ['improve',"s'améliorer",'To become or make something better.','I want to {improve} my English.']],
+  [['afford','avoir les moyens de','To have enough money to buy something.',"We can't {afford} a new car."],
+   ['avoid','éviter','To stay away from something.','Try to {avoid} the traffic at 8 a.m.'],
+   ['behave','se comporter','To act in a particular way.','The children {behaved} very well.'],
+   ['consider','envisager','To think carefully about something.',"I'm {considering} moving to Lyon."],
+   ['depend','dépendre','To be decided by something else.','It {depends} on the weather.']],
+  [['expand','se développer','To become bigger.','The company wants to {expand} abroad.'],
+   ['familiar','familier','Well known to you.','Her face looks {familiar}.'],
+   ['generous','généreux','Happy to give more than needed.','He is very {generous} with his time.'],
+   ['handle','gérer','To deal with a problem or situation.','She can {handle} stress easily.'],
+   ['insight','compréhension profonde','A clear understanding of something.','The book gives great {insight} into human behaviour.']],
+  [['maintain','maintenir, entretenir','To keep something in good condition.',"It's hard to {maintain} a healthy routine."],
+   ['narrow','étroit','Small from side to side.','The street is too {narrow} for trucks.'],
+   ['obvious','évident','Easy to see or understand.','The answer was {obvious}.'],
+   ['particular','particulier','Special or specific.','Is there any {particular} reason?'],
+   ['reliable','fiable','Able to be trusted.','He is a {reliable} worker.']],
+  [['schedule','emploi du temps','A plan of when things will happen.','My {schedule} is full this week.'],
+   ['tend','avoir tendance à','To usually do something.','I {tend} to wake up early.'],
+   ['upset','contrarié, bouleversé','Unhappy or worried.','She was {upset} about the news.'],
+   ['valuable','précieux','Very useful or worth a lot of money.','Your advice was very {valuable}.'],
+   ['wander','flâner, errer','To walk slowly without a clear goal.','We {wandered} around the old town.']]
+ ],
+ [ // Semaine 2
+  [['aware','conscient','Knowing that something exists.','Are you {aware} of the risks?'],
+   ['boost','stimuler','To increase or improve something.','Good sleep can {boost} your memory.'],
+   ['cope','faire face','To deal with a difficult situation.','How do you {cope} with pressure?'],
+   ['deadline','date limite','The last time something must be finished.','The {deadline} is next Friday.'],
+   ['effort','effort','Energy used to do something.','It takes a lot of {effort} to learn.']],
+  [['fair','juste, équitable','Treating people equally.',"That doesn't seem {fair}."],
+   ['gather','rassembler','To bring together or collect.','People {gathered} in the square.'],
+   ['hesitate','hésiter','To pause before doing something.',"Don't {hesitate} to ask questions."],
+   ['impact','impact','A strong effect on something.','Social media has a big {impact} on teenagers.'],
+   ['journey','voyage, trajet','A trip from one place to another.','The {journey} took three hours.']],
+  [['lack','manque','Not having enough of something.','A {lack} of sleep affects your mood.'],
+   ['measure','mesurer','To find the size or amount of something.','Please {measure} the room carefully.'],
+   ['nowadays','de nos jours','At the present time.','Most people use smartphones {nowadays}.'],
+   ['option','option, choix','A choice you can make.','We have two {options}.'],
+   ['pursue','poursuivre','To try to achieve something over time.','He wants to {pursue} a career in design.']],
+  [['reduce','réduire','To make something smaller or less.','We must {reduce} our costs.'],
+   ['settle',"s'installer",'To start living in a place.','They want to {settle} in the countryside.'],
+   ['struggle','avoir du mal','To try hard when something is difficult.','Many students {struggle} with grammar.'],
+   ['suggest','suggérer','To offer an idea or plan.','I {suggest} taking a short break.'],
+   ['tough','difficile, dur','Difficult or strong.','It was a {tough} decision.']],
+  [['unlikely','peu probable','Not expected to happen.',"It's {unlikely} to rain today."],
+   ['update','mettre à jour','To make something more current.','Remember to {update} your phone.'],
+   ['vague','vague, flou','Not clear or exact.','His answer was too {vague}.'],
+   ['wealth','richesse','A large amount of money or valuable things.','Health is more important than {wealth}.'],
+   ['worth','valoir la peine','Having a certain value or being useful.','This museum is {worth} visiting.']]
+ ]
+];
+
+// ---------- DONNÉES DÉRIVÉES ----------
+let n = 0;
+const DAYS = WEEKS.flatMap((wk, wi) => wk.map(day => ({
+  day: ++n, week: wi + 1,
+  words: day.map(([w, tr, def, ex]) => ({ w, tr, def, ex }))
+})));
+const ALL = DAYS.flatMap(d => d.words);
+
+// ---------- STOCKAGE ----------
+const KEY = 'vocab-b1b2-v1';
+const DEF = { currentDay: 1, learned: [], quizScores: {}, mastered: [], weekly: {} };
+let S;
+try { S = { ...DEF, ...JSON.parse(localStorage.getItem(KEY)) }; } catch { S = { ...DEF }; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+
+// ---------- OUTILS ----------
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const form = e => e.match(/\{(.+?)\}/)[1];
+const plain = e => e.replace(/[{}]/g, '');
+const blank = e => e.replace(/\{.+?\}/, '_____');
+const canSpeak = 'speechSynthesis' in window;
+const speak = t => { if (!canSpeak) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'en-US'; u.rate = 0.9; speechSynthesis.speak(u); };
+const build = words => shuffle(words).map(x => {
+  const ans = form(x.ex);
+  const others = shuffle(ALL.filter(p => p.w !== x.w)).slice(0, 3).map(p => form(p.ex));
+  return { w: x.w, s: blank(x.ex), ans, opts: shuffle([ans, ...others]) };
+});
+const td = () => DAYS.find(d => d.day === S.currentDay);
+const weeksDone = () => WEEKS.map((_, i) => i + 1).filter(k => DAYS.filter(d => d.week === k).every(d => d.day in S.quizScores));
+
+// ---------- VUES ----------
+let V = { name: 'home' };
+
+function homeView() {
+  const today = td();
+  const pct = Math.round(S.mastered.length / ALL.length * 100);
+  const learned = today && S.learned.includes(today.day);
+  const btn = (a, label, cls = 'bg-white', v = '', dis = false) =>
+    `<button data-a="${a}" data-v="${v}" ${dis ? 'disabled' : ''} class="w-full rounded-2xl p-4 text-left font-semibold shadow disabled:opacity-40 ${cls}">${label}</button>`;
+  return `<div class="flex flex-col gap-4">
+    <h1 class="text-3xl font-bold">5 mots par jour</h1>
+    <div class="rounded-3xl bg-white p-5 shadow">
+      <p class="text-sm text-slate-500">Mots maîtrisés</p>
+      <p class="text-2xl font-bold">${S.mastered.length} / ${ALL.length}</p>
+      <div class="mt-2 h-2 rounded-full bg-slate-200"><div class="h-2 rounded-full bg-emerald-500" style="width:${pct}%"></div></div>
+    </div>
+    ${today ? `<h2 class="mt-2 text-lg font-semibold">Jour ${today.day}</h2>
+      ${btn('learn', '📖 Apprendre les 5 mots ' + (learned ? '✓' : ''), 'bg-indigo-600 text-white')}
+      ${btn('quiz', '✏️ Quiz du jour', 'bg-white', '', !learned)}`
+      : `<p class="rounded-2xl bg-emerald-100 p-4">🎓 Curriculum terminé, bravo !</p>`}
+    ${weeksDone().map(k => btn('review', `🏁 Bilan semaine ${k} ${S.weekly[k] ? '(dernier : ' + S.weekly[k] + ')' : ''}`, 'bg-white', k)).join('')}
+    <button data-a="reset" class="mt-6 text-sm text-slate-400 underline">Réinitialiser la progression</button>
+  </div>`;
+}
+
+function learnView() {
+  const words = td().words, w = words[V.i], last = V.i === words.length - 1;
+  return `<div class="flex flex-col gap-4">
+    <div class="flex justify-between text-sm text-slate-500">
+      <button data-a="home">← Retour</button><span>${V.i + 1} / ${words.length}</span>
+    </div>
+    <div data-a="flip" class="flex min-h-80 cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-white p-6 text-center shadow-lg">
+      <h2 class="text-4xl font-bold text-indigo-600">${w.w}</h2>
+      ${canSpeak ? `<button data-a="say" class="rounded-full bg-indigo-100 px-4 py-2 text-indigo-700">🔊 Écouter</button>` : ''}
+      ${V.flip ? `<div class="space-y-3">
+          <p class="text-xl font-semibold">${w.tr}</p>
+          <p class="text-slate-600">${w.def}</p>
+          <p class="italic text-slate-500">“${plain(w.ex)}” ${canSpeak ? '<button data-a="sayex">🔊</button>' : ''}</p>
+        </div>` : `<p class="text-sm text-slate-400">Touche la carte pour voir la réponse</p>`}
+    </div>
+    <button data-a="next" class="rounded-2xl bg-indigo-600 py-3 font-semibold text-white active:scale-95">${last ? 'Terminer l’apprentissage' : 'Mot suivant →'}</button>
+  </div>`;
+}
+
+function quizView() {
+  const N = V.qs.length;
+  if (V.i >= N) {
+    return `<div class="flex flex-col items-center gap-4 pt-16 text-center">
+      <p class="text-6xl">${V.good.length >= N * 0.8 ? '🎉' : '💪'}</p>
+      <h2 class="text-2xl font-bold">${V.good.length} / ${N}</h2>
+      ${V.bad.length ? `<p class="text-slate-600">À revoir : ${V.bad.join(', ')}</p>` : ''}
+      <button data-a="finish" class="mt-4 w-full rounded-2xl bg-indigo-600 py-3 font-semibold text-white">Continuer</button>
+    </div>`;
+  }
+  const q = V.qs[V.i];
+  const opts = q.opts.map((o, k) => {
+    let c = 'bg-white';
+    if (V.picked !== null) c = o === q.ans ? 'bg-emerald-100 border-emerald-500' : k === V.picked ? 'bg-rose-100 border-rose-500' : 'bg-white opacity-50';
+    return `<button data-a="pick" data-v="${k}" class="rounded-2xl border-2 border-transparent p-4 text-left text-lg shadow-sm ${c}">${o}</button>`;
+  }).join('');
+  return `<div class="flex flex-col gap-4">
+    <div class="flex justify-between text-sm text-slate-500"><button data-a="home">← Quitter</button><span>${V.title} · ${V.i + 1}/${N}</span></div>
+    <div class="h-2 rounded-full bg-slate-200"><div class="h-2 rounded-full bg-indigo-500" style="width:${V.i / N * 100}%"></div></div>
+    <p class="rounded-3xl bg-white p-6 text-xl leading-relaxed shadow">${q.s}</p>
+    <div class="grid gap-3">${opts}</div>
+    ${V.picked !== null ? `<button data-a="nextq" class="rounded-2xl bg-indigo-600 py-3 font-semibold text-white">Suivant →</button>` : ''}
+  </div>`;
+}
+
+function render() {
+  document.getElementById('app').innerHTML = V.name === 'learn' ? learnView() : V.name === 'quiz' ? quizView() : homeView();
+}
+
+// ---------- ACTIONS ----------
+const startQuiz = (kind, title, words, wk) => { V = { name: 'quiz', kind, title, wk, qs: build(words), i: 0, picked: null, good: [], bad: [] }; };
+
+function act(a, v) {
+  if (a === 'home') V = { name: 'home' };
+  else if (a === 'learn') V = { name: 'learn', i: 0, flip: false };
+  else if (a === 'flip') V.flip = !V.flip;
+  else if (a === 'say') { speak(td().words[V.i].w); return; }
+  else if (a === 'sayex') { speak(plain(td().words[V.i].ex)); return; }
+  else if (a === 'next') {
+    if (V.i >= td().words.length - 1) { S.learned = [...new Set([...S.learned, td().day])]; save(); V = { name: 'home' }; }
+    else { V.i++; V.flip = false; }
+  }
+  else if (a === 'quiz') startQuiz('daily', 'Jour ' + td().day, td().words);
+  else if (a === 'review') startQuiz('weekly', 'Bilan S' + v, shuffle(DAYS.filter(d => d.week == v).flatMap(d => d.words)).slice(0, 15), +v);
+  else if (a === 'pick') {
+    if (V.picked !== null) return;
+    const q = V.qs[V.i]; V.picked = +v;
+    (q.opts[+v] === q.ans ? V.good : V.bad).push(q.w);
+  }
+  else if (a === 'nextq') { V.i++; V.picked = null; }
+  else if (a === 'finish') {
+    if (V.kind === 'daily') {
+      S.quizScores[td().day] = V.good.length;
+      S.mastered = [...new Set([...S.mastered, ...V.good])];
+      S.currentDay++;
+    } else {
+      S.weekly[V.wk] = V.good.length + '/' + V.qs.length;
+      S.mastered = [...new Set([...S.mastered, ...V.good])].filter(w => !V.bad.includes(w));
+    }
+    save(); V = { name: 'home' };
+  }
+  else if (a === 'reset') {
+    if (!confirm('Effacer toute la progression ?')) return;
+    S = { ...DEF }; save(); V = { name: 'home' };
+  }
+  render();
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-a]');
+  if (b && !b.disabled) act(b.dataset.a, b.dataset.v);
+});
+render();
+</script>
+</body>
+</html>
